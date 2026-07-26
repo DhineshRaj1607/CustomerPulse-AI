@@ -134,7 +134,6 @@ export default function Sidebar({ onOpenAssistant }: { onOpenAssistant: () => vo
                       : 'sidebar-link-inactive'
                   }`}
                 >
-                  <span className="absolute inset-y-0 left-0 w-0.5 rounded-full bg-gradient-to-b from-sky-400 via-cyan-300 to-blue-200 opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
                   {active && (
                     <motion.span
                       layoutId="sidebar-active"

@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Customer {
+  id               Int       @id @default(autoincrement())
+  name             String
+  email            String    @unique
+  phone            String
+  city             String?
+  totalOrders      Int       @default(0) @map("totalorders")
+  totalSpent       Decimal   @default(0) @map("totalspent")
+  lastPurchaseDate DateTime? @map("lastpurchasedate")
+  segment          String?
+  status           String    @default("active")
+  createdAt        DateTime  @default(now()) @map("createdat")
+
+  @@map("customers")
+}
+
+model Segment {
+  id             Int      @id @default(autoincrement())
+  name           String
+  description    String   @default("")
+  audienceSize   Int      @default(0) @map("audiencesize")
+  conditions     Json     @default("[]")
+  estimatedReach Int      @default(0) @map("estimatedreach")
+  createdAt      DateTime @default(now()) @map("createdat")
+
+  @@map("segments")
+}
+
+model Campaign {
+  id           Int       @id @default(autoincrement())
+  campaignName String    @map("campaignname")
+  segment      String
+  channels     Json      @default("[]")
+  message      String?
+  scheduleType String    @default("Send Now") @map("scheduletype")
+  status       String    @default("Draft")
+  sentCount    Int       @default(0) @map("sentcount")
+  sentDate     DateTime? @map("sentdate")
+  openRate     Decimal   @default(0) @map("openrate")
+  createdAt    DateTime  @default(now()) @map("createdat")
+
+  @@map("campaigns")
+}

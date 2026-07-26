@@ -4,7 +4,7 @@ import { CheckCircle2, Send, Sparkles } from 'lucide-react';
 import { getCampaigns, getSegments, createCampaign, sendEmailCampaign, Campaign, Segment } from '../../services/api';
 import { useToast } from '../ui/Toast';
 
-const channelOptions = ['WhatsApp', 'SMS', 'Email'] as const;
+const channelOptions = ['Email'] as const;
 const scheduleOptions = ['Send Now', 'Schedule Later'] as const;
 const toneOptions = ['Friendly', 'Urgent', 'Exclusive', 'Informative'] as const;
 
@@ -13,7 +13,7 @@ export default function CampaignsPage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [step, setStep] = useState(1);
   const [campaignName, setCampaignName] = useState('Weekend Drop Reminder');
-  const [channels, setChannels] = useState<string[]>(['WhatsApp', 'Email']);
+  const [channels, setChannels] = useState<string[]>(['Email']);
   const [scheduleOption, setScheduleOption] = useState<(typeof scheduleOptions)[number]>('Send Now');
   const [scheduledAt, setScheduledAt] = useState('2026-06-11T10:00');
   const [message, setMessage] = useState('Hi {first_name}, check our latest collection and enjoy exclusive access today.');

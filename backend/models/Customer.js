@@ -1,4 +1,4 @@
-const { query } = require('../config/db');
+const prisma = require('../config/prisma');
 
 const normalizeCustomer = (row) => {
   if (!row) return null;
@@ -8,110 +8,100 @@ const normalizeCustomer = (row) => {
     email: row.email,
     phone: row.phone,
     city: row.city,
-    totalOrders: row.totalorders,
-    totalSpent: Number(row.totalspent),
-    lastPurchaseDate: row.lastpurchasedate,
+    totalOrders: row.totalOrders,
+    totalSpent: Number(row.totalSpent),
+    lastPurchaseDate: row.lastPurchaseDate,
     segment: row.segment,
     status: row.status,
-    createdAt: row.createdat,
+    createdAt: row.createdAt,
   };
 };
 
 const getAll = async () => {
-  const result = await query('SELECT * FROM customers ORDER BY createdat DESC');
-  return result.rows.map(normalizeCustomer);
+  const rows = await prisma.customer.findMany({
+    orderBy: { createdAt: 'desc' },
+  });
+  return rows.map(normalizeCustomer);
 };
 
 const getById = async (id) => {
-  const result = await query('SELECT * FROM customers WHERE id = $1 LIMIT 1', [id]);
-  return normalizeCustomer(result.rows[0]);
+  const row = await prisma.customer.findUnique({ where: { id: Number(id) } });
+  return normalizeCustomer(row);
 };
 
 const create = async (data) => {
-  const result = await query(
-    `INSERT INTO customers (name, email, phone, city, totalorders, totalspent, lastpurchasedate, segment, status)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-     RETURNING *`,
-    [
-      data.name,
-      data.email,
-      data.phone,
-      data.city || null,
-      data.totalOrders ?? 0,
-      data.totalSpent ?? 0,
-      data.lastPurchaseDate || null,
-      data.segment || null,
-      data.status || 'active',
-    ],
-  );
-  return normalizeCustomer(result.rows[0]);
+  const row = await prisma.customer.create({
+    data: {
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      city: data.city || null,
+      totalOrders: data.totalOrders ?? 0,
+      totalSpent: data.totalSpent ?? 0,
+      lastPurchaseDate: data.lastPurchaseDate ? new Date(data.lastPurchaseDate) : null,
+      segment: data.segment || null,
+      status: data.status || 'active',
+    },
+  });
+  return normalizeCustomer(row);
 };
 
 const update = async (id, fields) => {
-  const columnMap = {
-    name: 'name',
-    email: 'email',
-    phone: 'phone',
-    city: 'city',
-    totalOrders: 'totalorders',
-    totalSpent: 'totalspent',
-    lastPurchaseDate: 'lastpurchasedate',
-    segment: 'segment',
-    status: 'status',
-  };
+  const data = {};
+  if (fields.name !== undefined) data.name = fields.name;
+  if (fields.email !== undefined) data.email = fields.email;
+  if (fields.phone !== undefined) data.phone = fields.phone;
+  if (fields.city !== undefined) data.city = fields.city;
+  if (fields.totalOrders !== undefined) data.totalOrders = fields.totalOrders;
+  if (fields.totalSpent !== undefined) data.totalSpent = fields.totalSpent;
+  if (fields.lastPurchaseDate !== undefined) data.lastPurchaseDate = fields.lastPurchaseDate ? new Date(fields.lastPurchaseDate) : null;
+  if (fields.segment !== undefined) data.segment = fields.segment;
+  if (fields.status !== undefined) data.status = fields.status;
 
-  const updates = [];
-  const values = [];
-  let index = 1;
-
-  Object.entries(columnMap).forEach(([field, column]) => {
-    if (fields[field] !== undefined) {
-      updates.push(`${column} = $${index}`);
-      values.push(fields[field]);
-      index += 1;
-    }
-  });
-
-  if (updates.length === 0) {
+  if (Object.keys(data).length === 0) {
     return getById(id);
   }
 
-  values.push(id);
-  const result = await query(
-    `UPDATE customers SET ${updates.join(', ')} WHERE id = $${index} RETURNING *`,
-    values,
-  );
-  return normalizeCustomer(result.rows[0]);
+  const row = await prisma.customer.update({ where: { id: Number(id) }, data });
+  return normalizeCustomer(row);
 };
 
 const deleteById = async (id) => {
-  await query('DELETE FROM customers WHERE id = $1', [id]);
+  await prisma.customer.delete({ where: { id: Number(id) } });
 };
 
 const getCount = async () => {
-  const result = await query('SELECT COUNT(*) FROM customers');
-  return parseInt(result.rows[0].count, 10);
+  return prisma.customer.count();
 };
 
 const findAllWithEmails = async () => {
-  const result = await query("SELECT * FROM customers WHERE email IS NOT NULL AND email <> '' ORDER BY createdat DESC");
-  return result.rows.map(normalizeCustomer);
+  const rows = await prisma.customer.findMany({
+    where: { email: { not: '' } },
+    orderBy: { createdAt: 'desc' },
+  });
+  return rows.map(normalizeCustomer);
 };
 
 const findBySegmentExact = async (segment) => {
-  const result = await query(
-    `SELECT * FROM customers WHERE segment ILIKE $1 AND email IS NOT NULL AND email <> '' ORDER BY createdat DESC`,
-    [segment],
-  );
-  return result.rows.map(normalizeCustomer);
+  const rows = await prisma.customer.findMany({
+    where: {
+      segment: segment,
+      email: { not: '' },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+  return rows.map(normalizeCustomer);
 };
 
 const findBySegmentPartial = async (segment) => {
-  const result = await query(
-    `SELECT * FROM customers WHERE segment ILIKE $1 AND email IS NOT NULL AND email <> '' ORDER BY createdat DESC`,
-    [`%${segment}%`],
-  );
-  return result.rows.map(normalizeCustomer);
+  const rows = await prisma.customer.findMany({
+    where: {
+      segment: { contains: segment, mode: 'insensitive' },
+      email: { not: '' },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+  return rows.map(normalizeCustomer);
 };
 
 module.exports = {

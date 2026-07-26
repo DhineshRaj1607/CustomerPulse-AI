@@ -1,4 +1,4 @@
-const { query } = require('../config/db');
+const prisma = require('../config/prisma');
 
 const normalizeSegment = (row) => {
   if (!row) return null;
@@ -6,84 +6,63 @@ const normalizeSegment = (row) => {
     _id: String(row.id),
     name: row.name,
     description: row.description,
-    audienceSize: row.audiencesize,
+    audienceSize: row.audienceSize,
     conditions: row.conditions || [],
-    estimatedReach: row.estimatedreach,
-    createdAt: row.createdat,
+    estimatedReach: row.estimatedReach,
+    createdAt: row.createdAt,
   };
 };
 
 const getAll = async () => {
-  const result = await query('SELECT * FROM segments ORDER BY createdat DESC');
-  return result.rows.map(normalizeSegment);
+  const rows = await prisma.segment.findMany({ orderBy: { createdAt: 'desc' } });
+  return rows.map(normalizeSegment);
 };
 
 const getById = async (id) => {
-  const result = await query('SELECT * FROM segments WHERE id = $1 LIMIT 1', [id]);
-  return normalizeSegment(result.rows[0]);
+  const row = await prisma.segment.findUnique({ where: { id: Number(id) } });
+  return normalizeSegment(row);
 };
 
 const getByName = async (name) => {
-  const result = await query('SELECT * FROM segments WHERE name ILIKE $1 LIMIT 1', [name]);
-  return normalizeSegment(result.rows[0]);
+  const row = await prisma.segment.findFirst({ where: { name: { equals: name, mode: 'insensitive' } } });
+  return normalizeSegment(row);
 };
 
 const create = async (data) => {
-  const result = await query(
-    `INSERT INTO segments (name, description, audiencesize, conditions, estimatedreach)
-     VALUES ($1, $2, $3, $4, $5)
-     RETURNING *`,
-    [
-      data.name,
-      data.description || '',
-      data.audienceSize ?? data.estimatedReach ?? 0,
-      JSON.stringify(data.conditions || []),
-      data.estimatedReach ?? data.audienceSize ?? 0,
-    ],
-  );
-  return normalizeSegment(result.rows[0]);
+  const row = await prisma.segment.create({
+    data: {
+      name: data.name,
+      description: data.description || '',
+      audienceSize: data.audienceSize ?? data.estimatedReach ?? 0,
+      conditions: data.conditions || [],
+      estimatedReach: data.estimatedReach ?? data.audienceSize ?? 0,
+    },
+  });
+  return normalizeSegment(row);
 };
 
 const update = async (id, fields) => {
-  const columnMap = {
-    name: 'name',
-    description: 'description',
-    audienceSize: 'audiencesize',
-    conditions: 'conditions',
-    estimatedReach: 'estimatedreach',
-  };
+  const data = {};
+  if (fields.name !== undefined) data.name = fields.name;
+  if (fields.description !== undefined) data.description = fields.description;
+  if (fields.audienceSize !== undefined) data.audienceSize = fields.audienceSize;
+  if (fields.conditions !== undefined) data.conditions = fields.conditions || [];
+  if (fields.estimatedReach !== undefined) data.estimatedReach = fields.estimatedReach;
 
-  const updates = [];
-  const values = [];
-  let index = 1;
-
-  Object.entries(columnMap).forEach(([field, column]) => {
-    if (fields[field] !== undefined) {
-      updates.push(`${column} = $${index}`);
-      values.push(field === 'conditions' ? JSON.stringify(fields.conditions || []) : fields[field]);
-      index += 1;
-    }
-  });
-
-  if (updates.length === 0) {
+  if (Object.keys(data).length === 0) {
     return getById(id);
   }
 
-  values.push(id);
-  const result = await query(
-    `UPDATE segments SET ${updates.join(', ')} WHERE id = $${index} RETURNING *`,
-    values,
-  );
-  return normalizeSegment(result.rows[0]);
+  const row = await prisma.segment.update({ where: { id: Number(id) }, data });
+  return normalizeSegment(row);
 };
 
 const deleteById = async (id) => {
-  await query('DELETE FROM segments WHERE id = $1', [id]);
+  await prisma.segment.delete({ where: { id: Number(id) } });
 };
 
 const getCount = async () => {
-  const result = await query('SELECT COUNT(*) FROM segments WHERE audiencesize > 0');
-  return parseInt(result.rows[0].count, 10);
+  return prisma.segment.count({ where: { audienceSize: { gt: 0 } } });
 };
 
 module.exports = {

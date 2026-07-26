@@ -242,61 +242,86 @@ button:disabled {
   box-shadow: 0 10px 26px rgba(37, 99, 235, 0.14) !important;
 }
 
-/* Uiverse kind-bobcat-81 Edit Button */
-.edit-button {
-  width: 40px;
-  height: 40px;
-  min-width: 40px;
-  min-height: 40px;
-  padding: 0;
-  border-radius: 50%;
-  background-color: #1E293B;
+/* Uiverse vinodjangid07 Edit Button */
+.editBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   border: none;
-  font-weight: 600;
-  display: inline-flex;
+  background-color: rgb(93, 93, 116);
+  display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.18);
+  box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1);
   cursor: pointer;
-  transition-duration: 0.3s;
-  overflow: hidden;
   position: relative;
-  text-decoration: none !important;
+  overflow: hidden;
+  transition: all 0.3s;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0;
 }
 
-.edit-button:hover {
-  width: 110px;
-  border-radius: 50px;
-  transition-duration: 0.3s;
-  background: linear-gradient(135deg, #2563EB, #14B8A6);
-  align-items: center;
-  border: none;
-  transform: none;
-  box-shadow: 0 14px 28px rgba(37, 99, 235, 0.24), 0 0 18px rgba(20, 184, 166, 0.18);
+.editBtn::before {
+  content: "";
+  width: 200%;
+  height: 200%;
+  background-color: rgb(102, 102, 141);
+  position: absolute;
+  z-index: 1;
+  transform: scale(0);
+  transition: all 0.3s;
+  border-radius: 50%;
+  filter: blur(8px);
 }
 
-.edit-button:active {
-  transform: scale(0.96);
+.editBtn:hover::before {
+  transform: scale(1);
 }
 
-.edit-svgIcon {
-  width: 17px;
-  height: 17px;
-  transition-duration: 0.3s;
-  flex-shrink: 0;
+.editBtn:hover {
+  box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.25);
 }
 
-.edit-svgIcon path {
+.editBtn svg {
+  height: 14px;
   fill: white;
+  z-index: 3;
+  transition: all 0.2s;
+  transform-origin: bottom;
 }
 
-.edit-button:hover .edit-svgIcon {
-  width: 20px;
-  transition-duration: 0.3s;
-  transform: rotate(360deg);
+.editBtn:hover svg {
+  transform: rotate(-15deg) translateX(3px);
 }
 
-.edit-button::before {
+.editBtn::after {
+  content: "";
+  width: 18px;
+  height: 1.2px;
+  position: absolute;
+  bottom: 14px;
+  left: -4px;
+  background-color: white;
+  border-radius: 2px;
+  z-index: 2;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.5s ease-out;
+}
+
+.editBtn:hover::after {
+  transform: scaleX(1);
+  left: 0px;
+  transform-origin: right;
+}
+
+.editBtn:active {
+  transform: scale(0.92);
+}
+
+/* Old edit button fallback - keeping for compatibility */
+.edit-button {
   display: none;
   content: "Edit";
   color: white;

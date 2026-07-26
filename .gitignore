@@ -1,4 +1,89 @@
-node_modules/
+# Environment variables - NEVER commit these
 .env
+.env.local
+.env.production
+.env.*.local
+.env.development
+.env.test
+
+# Backend-specific environment
+backend/.env
+backend/.env.local
+backend/.env.production
+
+# Frontend-specific environment
+frontend/.env
+frontend/.env.local
+frontend/.env.production
+
+# Dependencies
+node_modules/
+*/node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Build outputs
 dist/
 build/
+*/dist/
+*/build/
+.next/
+out/
+.cache/
+
+# Development & IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+*.sublime-workspace
+*.sublime-project
+.env*.swp
+.vscode/extensions/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.log
+logs/
+.npmrc
+.yarnrc
+
+# IDE-specific folders
+.agents/
+.claude/
+.windsurf/
+
+# OS-specific
+.AppleDouble
+.LSOverride
+.TemporaryItems
+
+# Prisma
+prisma/migrations/**/migration_lock.toml
+.prisma/
+
+# Testing
+coverage/
+.nyc_output/
+
+# Build artifacts
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# Docker
+.dockerignore
+
+# API test files (local development)
+test-*.js
+*-test.js
+*.test.ts
+
+# Temporary Prisma files
+tmp-prisma-*.js
+skills-lock.json

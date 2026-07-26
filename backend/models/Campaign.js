@@ -1,106 +1,82 @@
-const { query } = require('../config/db');
+const prisma = require('../config/prisma');
 
 const normalizeCampaign = (row) => {
   if (!row) return null;
   return {
     _id: String(row.id),
-    campaignName: row.campaignname,
+    campaignName: row.campaignName,
     segment: row.segment,
     channels: row.channels || [],
     message: row.message,
-    scheduleType: row.scheduletype,
+    scheduleType: row.scheduleType,
     status: row.status,
-    sentCount: row.sentcount,
-    sentDate: row.sentdate,
-    openRate: Number(row.openrate),
-    createdAt: row.createdat,
+    sentCount: row.sentCount,
+    sentDate: row.sentDate,
+    openRate: Number(row.openRate),
+    createdAt: row.createdAt,
   };
 };
 
 const getAll = async () => {
-  const result = await query('SELECT * FROM campaigns ORDER BY createdat DESC');
-  return result.rows.map(normalizeCampaign);
+  const rows = await prisma.campaign.findMany({ orderBy: { createdAt: 'desc' } });
+  return rows.map(normalizeCampaign);
 };
 
 const getById = async (id) => {
-  const result = await query('SELECT * FROM campaigns WHERE id = $1 LIMIT 1', [id]);
-  return normalizeCampaign(result.rows[0]);
+  const row = await prisma.campaign.findUnique({ where: { id: Number(id) } });
+  return normalizeCampaign(row);
 };
 
 const create = async (data) => {
-  const result = await query(
-    `INSERT INTO campaigns (campaignname, segment, channels, message, scheduletype, status, sentcount, sentdate, openrate)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-     RETURNING *`,
-    [
-      data.campaignName,
-      data.segment,
-      JSON.stringify(data.channels || []),
-      data.message || null,
-      data.scheduleType || 'Send Now',
-      data.status || 'Draft',
-      data.sentCount ?? 0,
-      data.sentDate || null,
-      data.openRate ?? 0,
-    ],
-  );
-  return normalizeCampaign(result.rows[0]);
+  const row = await prisma.campaign.create({
+    data: {
+      campaignName: data.campaignName,
+      segment: data.segment,
+      channels: data.channels || [],
+      message: data.message || null,
+      scheduleType: data.scheduleType || 'Send Now',
+      status: data.status || 'Draft',
+      sentCount: data.sentCount ?? 0,
+      sentDate: data.sentDate ? new Date(data.sentDate) : null,
+      openRate: data.openRate ?? 0,
+    },
+  });
+  return normalizeCampaign(row);
 };
 
 const update = async (id, fields) => {
-  const columnMap = {
-    campaignName: 'campaignname',
-    segment: 'segment',
-    channels: 'channels',
-    message: 'message',
-    scheduleType: 'scheduletype',
-    status: 'status',
-    sentCount: 'sentcount',
-    sentDate: 'sentdate',
-    openRate: 'openrate',
-  };
+  const data = {};
+  if (fields.campaignName !== undefined) data.campaignName = fields.campaignName;
+  if (fields.segment !== undefined) data.segment = fields.segment;
+  if (fields.channels !== undefined) data.channels = fields.channels || [];
+  if (fields.message !== undefined) data.message = fields.message;
+  if (fields.scheduleType !== undefined) data.scheduleType = fields.scheduleType;
+  if (fields.status !== undefined) data.status = fields.status;
+  if (fields.sentCount !== undefined) data.sentCount = fields.sentCount;
+  if (fields.sentDate !== undefined) data.sentDate = fields.sentDate ? new Date(fields.sentDate) : null;
+  if (fields.openRate !== undefined) data.openRate = fields.openRate;
 
-  const updates = [];
-  const values = [];
-  let index = 1;
-
-  Object.entries(columnMap).forEach(([field, column]) => {
-    if (fields[field] !== undefined) {
-      updates.push(`${column} = $${index}`);
-      values.push(field === 'channels' ? JSON.stringify(fields.channels || []) : fields[field]);
-      index += 1;
-    }
-  });
-
-  if (updates.length === 0) {
+  if (Object.keys(data).length === 0) {
     return getById(id);
   }
 
-  values.push(id);
-  const result = await query(
-    `UPDATE campaigns SET ${updates.join(', ')} WHERE id = $${index} RETURNING *`,
-    values,
-  );
-  return normalizeCampaign(result.rows[0]);
+  const row = await prisma.campaign.update({ where: { id: Number(id) }, data });
+  return normalizeCampaign(row);
 };
 
 const deleteById = async (id) => {
-  await query('DELETE FROM campaigns WHERE id = $1', [id]);
+  await prisma.campaign.delete({ where: { id: Number(id) } });
 };
 
 const getCountByStatus = async (statuses) => {
-  const result = await query(
-    `SELECT COUNT(*) FROM campaigns WHERE status = ANY($1::text[])`,
-    [statuses],
-  );
-  return parseInt(result.rows[0].count, 10);
+  return prisma.campaign.count({ where: { status: { in: statuses } } });
 };
 
 const getAverageOpenRate = async () => {
-  const result = await query(`
-    SELECT AVG(openrate) AS averageopenrate FROM campaigns WHERE openrate IS NOT NULL
-  `);
-  return Number(result.rows[0].averageopenrate ?? 0);
+  const result = await prisma.campaign.aggregate({
+    _avg: { openRate: true },
+  });
+  return Number(result._avg.openRate ?? 0);
 };
 
 module.exports = {

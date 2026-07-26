@@ -4,16 +4,10 @@ const Campaign = require('../models/Campaign');
 
 const getAnalyticsSummary = async (req, res) => {
   try {
-    const totalCustomers = await Customer.countDocuments();
-    const activeSegments = await Segment.countDocuments({ audienceSize: { $gt: 0 } });
-    const campaignsSent = await Campaign.countDocuments({ status: { $in: ['Sent', 'Completed', 'Delivered'] } });
-
-    const avgOpenRateResult = await Campaign.aggregate([
-      { $match: { openRate: { $exists: true, $ne: null } } },
-      { $group: { _id: null, averageOpenRate: { $avg: '$openRate' } } },
-    ]);
-
-    const avgOpenRate = avgOpenRateResult[0]?.averageOpenRate ?? 0;
+    const totalCustomers = await Customer.getCount();
+    const activeSegments = await Segment.getCount();
+    const campaignsSent = await Campaign.getCountByStatus(['Sent', 'Completed', 'Delivered']);
+    const avgOpenRate = await Campaign.getAverageOpenRate();
 
     res.json({
       totalCustomers,
